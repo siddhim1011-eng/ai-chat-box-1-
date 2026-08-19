@@ -16,6 +16,10 @@ The page is available at:
 
 [http://localhost:3000/](http://localhost:3000/)
 
+The deployed server is available at:
+
+[https://ai-chat-box-1-os0l.onrender.com](https://ai-chat-box-1-os0l.onrender.com)
+
 You can also use the npm script:
 
 ```powershell
