@@ -3,47 +3,148 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Node Server</title>
+    <title>Chat Window</title>
     <style>
       :root {
-        color-scheme: light;
-        font-family: Georgia, "Times New Roman", serif;
-        background: #f4efe6;
-        color: #24312d;
+        color-scheme: dark;
+        font-family: "Trebuchet MS", Verdana, sans-serif;
+        background: #10151a;
+        color: #edf4f0;
       }
+
+      * { box-sizing: border-box; }
 
       body {
-        display: grid;
         min-height: 100vh;
         margin: 0;
-        place-items: center;
+        padding: 24px;
+        background: radial-gradient(circle at 15% 10%, #294840 0, transparent 34%), #10151a;
       }
 
-      main {
-        max-width: 38rem;
-        padding: 3rem;
-        border: 1px solid #c9bda9;
-        background: #fffdf8;
-        box-shadow: 12px 12px 0 #d8c9b5;
+      .chat-shell {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        width: min(100%, 860px);
+        height: min(820px, calc(100vh - 48px));
+        min-height: 560px;
+        margin: auto;
+        overflow: hidden;
+        border: 1px solid #3d5a53;
+        background: #182126;
+        box-shadow: 18px 18px 0 #0a0d0f;
       }
 
-      h1 {
-        margin: 0 0 1rem;
-        font-size: clamp(2.5rem, 8vw, 5rem);
-        line-height: 0.95;
-        letter-spacing: 0;
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 28px;
+        border-bottom: 1px solid #30413f;
+        background: #1c292c;
       }
 
-      p {
-        margin: 0;
-        font: 1.1rem/1.6 Arial, sans-serif;
-      }
+      .identity { display: flex; align-items: center; gap: 14px; }
+      .avatar { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #e1a14b; color: #17211f; font-weight: 800; }
+      h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0; }
+      .status { margin: 4px 0 0; color: #98b1a8; font-size: .82rem; }
+      .status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #7bd69c; }
+
+      .messages { display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding: 30px clamp(18px, 6vw, 70px); }
+      .message { max-width: 72%; padding: 14px 17px; border-radius: 3px 16px 16px 16px; line-height: 1.5; font-size: .96rem; animation: appear .25s ease-out; }
+      .assistant { align-self: flex-start; background: #27363a; color: #e6eeea; }
+      .user { align-self: flex-end; border-radius: 16px 3px 16px 16px; background: #e1a14b; color: #1b211f; }
+      .time { display: block; margin-top: 6px; color: #8da49e; font-size: .7rem; }
+      .user .time { color: #76552d; }
+
+      .composer { padding: 18px 22px 22px; border-top: 1px solid #30413f; background: #1c292c; }
+      .quick-prompts { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; }
+      .quick-prompts button { flex: 0 0 auto; padding: 8px 11px; border: 1px solid #45635b; border-radius: 20px; background: transparent; color: #b5c9c1; cursor: pointer; }
+      .quick-prompts button:hover { border-color: #e1a14b; color: #f3c77f; }
+      form { display: flex; gap: 10px; }
+      textarea { flex: 1; min-height: 50px; max-height: 120px; resize: vertical; padding: 14px; border: 1px solid #45635b; border-radius: 4px; outline: none; background: #121a1e; color: #edf4f0; font: inherit; }
+      textarea:focus { border-color: #e1a14b; }
+      .send { width: 52px; border: 0; border-radius: 4px; background: #e1a14b; color: #17211f; font-size: 1.35rem; cursor: pointer; }
+      .send:hover { background: #f3bd69; }
+
+      @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+      @media (max-width: 600px) { body { padding: 0; } .chat-shell { width: 100%; height: 100vh; min-height: 100vh; box-shadow: none; } header { padding: 18px; } .messages { padding: 24px 16px; } .message { max-width: 88%; } }
     </style>
   </head>
   <body>
-    <main>
-      <h1>Hello from Node.js</h1>
-      <p>This HTML page is being served by a Node.js HTTP server.</p>
+    <main class="chat-shell">
+      <header>
+        <div class="identity">
+          <div class="avatar" aria-hidden="true">AI</div>
+          <div>
+            <h1>Node Chat</h1>
+            <p class="status">Online and ready to help</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="messages" id="messages" aria-live="polite">
+        <div class="message assistant">Hello. I'm your Node Chat assistant. What would you like to talk about?<span class="time">Just now</span></div>
+      </section>
+
+      <section class="composer">
+        <div class="quick-prompts" aria-label="Quick prompts">
+          <button type="button" data-prompt="What can you help me with?">What can you help with?</button>
+          <button type="button" data-prompt="Tell me something interesting.">Tell me something interesting</button>
+        </div>
+        <form id="chat-form">
+          <textarea id="message-input" rows="1" placeholder="Write a message..." aria-label="Message" required></textarea>
+          <button class="send" type="submit" aria-label="Send message" title="Send message">&#8593;</button>
+        </form>
+      </section>
     </main>
+
+    <script>
+      const form = document.querySelector('#chat-form');
+      const input = document.querySelector('#message-input');
+      const messages = document.querySelector('#messages');
+
+      function addMessage(text, role) {
+        const message = document.createElement('div');
+        message.className = `message ${role}`;
+        message.textContent = text;
+        const time = document.createElement('span');
+        time.className = 'time';
+        time.textContent = 'Just now';
+        message.append(time);
+        messages.append(message);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function respondTo(text) {
+        const normalized = text.toLowerCase();
+        if (normalized.includes('help')) return 'I can answer questions, brainstorm ideas, and help you explore this chat experience.';
+        if (normalized.includes('interesting')) return 'A day on Venus is longer than a year on Venus. Space has a few delightful contradictions.';
+        return `You said: "${text}". This demo is ready for a real AI API when you connect one to the Node server.`;
+      }
+
+      function submitMessage(text) {
+        const cleanText = text.trim();
+        if (!cleanText) return;
+        addMessage(cleanText, 'user');
+        input.value = '';
+        window.setTimeout(() => addMessage(respondTo(cleanText), 'assistant'), 450);
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        submitMessage(input.value);
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          form.requestSubmit();
+        }
+      });
+
+      document.querySelectorAll('[data-prompt]').forEach((button) => {
+        button.addEventListener('click', () => submitMessage(button.dataset.prompt));
+      });
+    </script>
   </body>
 </html>
