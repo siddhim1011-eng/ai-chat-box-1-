@@ -102,6 +102,7 @@
       const form = document.querySelector('#chat-form');
       const input = document.querySelector('#message-input');
       const messages = document.querySelector('#messages');
+      const conversation = [];
 
       function addMessage(text, role) {
         const message = document.createElement('div');
@@ -115,19 +116,26 @@
         messages.scrollTop = messages.scrollHeight;
       }
 
-      function respondTo(text) {
-        const normalized = text.toLowerCase();
-        if (normalized.includes('help')) return 'I can answer questions, brainstorm ideas, and help you explore this chat experience.';
-        if (normalized.includes('interesting')) return 'A day on Venus is longer than a year on Venus. Space has a few delightful contradictions.';
-        return `You said: "${text}". This demo is ready for a real AI API when you connect one to the Node server.`;
-      }
-
-      function submitMessage(text) {
+      async function submitMessage(text) {
         const cleanText = text.trim();
         if (!cleanText) return;
         addMessage(cleanText, 'user');
         input.value = '';
-        window.setTimeout(() => addMessage(respondTo(cleanText), 'assistant'), 450);
+        conversation.push({ role: 'user', content: cleanText });
+
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: conversation })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Request failed');
+          conversation.push({ role: 'assistant', content: result.reply });
+          addMessage(result.reply, 'assistant');
+        } catch (error) {
+          addMessage(`Sorry, I couldn't reach the assistant. ${error.message}`, 'assistant');
+        }
       }
 
       form.addEventListener('submit', (event) => {
